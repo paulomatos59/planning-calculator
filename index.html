@@ -22,10 +22,17 @@ body {
 
 h1 { text-align:center; color:#003a8f; }
 h2 {
-    margin-top:28px;
+    margin-top:48px;
     border-bottom:1px solid #d6e6f7;
     padding-bottom:6px;
     color:#003a8f;
+}
+h3 {
+    margin-top:60px;
+    border-bottom:1px solid #d6e6f7;
+    padding-bottom:6px;
+    color:#0078d4;
+    text-align:center;
 }
 
 /* FORM */
@@ -57,7 +64,7 @@ input {
     border:3px solid #b8d0ff;
     border-radius:18px;
     padding:22px;
-    margin:24px auto 0;
+    margin:60px auto 0;
     width:520px;
     text-align:center;
 }
@@ -180,7 +187,7 @@ td:first-child { text-align:left; }
 /* Quarter Capacity Bar */
 .capacity-bar-wrapper {
     max-width: 800px;
-    margin: 16px auto 32px;
+    margin: 20px auto 36px;
 }
 
 .capacity-bar-label {
@@ -225,6 +232,9 @@ td:first-child { text-align:left; }
 <h1>Quarter FTE Capacity Calculator</h1>
 
 <!-- TEAM -->
+<br>
+<h2>Step 1 | Enter your team details</h2>
+
 <div class="form-section"><div class="form-box">
     <label># of Resources</label>
     <input id="resources" type="number" value="10">
@@ -239,7 +249,7 @@ td:first-child { text-align:left; }
 <div class="form-section"><div class="form-box">
     <label># of Sprints in the Quarter</label>
     <input id="sprints" type="number" value="6">
-    <button class="calculate-btn" onclick="calculate()">Calculate</button>
+    <button class="calculate-btn" onclick="calculate()">Calculate Total FTE</button>
 </div></div>
 
 <div class="capacity-summary">
@@ -248,7 +258,8 @@ td:first-child { text-align:left; }
     <div class="fte-value" id="fteQuarter">0.00</div>
 </div>
 
-<h2>Allocation for the Quarter</h2>
+<br>
+<h2>Step 2 | Define the allocation for the Quarter</h2>
 <div class="card-green">
     <div class="alloc-row">
         <strong>RTB %</strong>
@@ -262,7 +273,7 @@ td:first-child { text-align:left; }
     </div>
 </div>
 
-<h2>Capacity Buffer</h2>
+<h3>It's recommended to add a capacity buffer:</h3>
 <div class="card-amber">
     <div class="alloc-row">
         <strong>Buffer %</strong>
@@ -272,12 +283,16 @@ td:first-child { text-align:left; }
 </div>
 
 <div class="form-section"><div class="form-box">
-    <button class="calculate-btn" onclick="calculate()">Calculate</button>
+    <button class="calculate-btn" onclick="calculate()">Update FTE Calculation</button>
 </div></div>
 
-<h2>Capacity Available for Quarter Commits</h2>
+
+<br>
+<br>
+
+<h3>The team capacity available for Quarter commits is:</h3>
 <div class="capacity-summary">
-    <strong>Effective FTE per Sprint</strong>
+    <strong>Effective FTE</strong>
     <div class="fte-value" id="effectiveSprintFte">0.00</div>
 </div>
 
@@ -286,7 +301,7 @@ td:first-child { text-align:left; }
 
 
 
-<h2>Quarter Capacity Usage</h2>
+<h2>Step 3 | High Level Planning </h2>
 
 <div class="capacity-bar-wrapper">
     <div class="capacity-bar-label">
@@ -301,21 +316,19 @@ td:first-child { text-align:left; }
 
 
 
-
-
-<h2>High level Capacity Planning</h2>
+<h3>Add the work items ranked and provide the estimate resources and sprints</h3>
 <button class="add-item-btn" onclick="addItem()">+ Add Work Item</button>
 
 <table id="itemsTable"></table>
 
-<h2>Capacity Burn‑up Chart</h2>
+<h3>Capacity Burn‑up Chart</h3>
 <div id="fteChartContainer">
     <svg id="fteBurnupChart" width="700" height="260"></svg>
 </div>
 </div>
 
 <footer style="margin-top:40px;text-align:center;font-size:12px;color:#666;">
-    Quarter FTE Capacity Calculator <strong>v3.2</strong><br>
+    Quarter FTE Capacity Calculator <strong>v3.1</strong><br>
     Published on <strong>17 April 2026</strong><br>
     Powered by <strong>Five9 TPM</strong><br>
 </footer>
