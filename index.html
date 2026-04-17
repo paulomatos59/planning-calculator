@@ -177,6 +177,43 @@ td:first-child { text-align:left; }
     cursor: pointer;
 }
 
+/* Quarter Capacity Bar */
+.capacity-bar-wrapper {
+    max-width: 800px;
+    margin: 16px auto 32px;
+}
+
+.capacity-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+.capacity-bar {
+    height: 22px;
+    background: #e6e6e6;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#quarterCapacityFill {
+    height: 100%;
+    width: 0%;
+    background: #0078d4;
+    transition: width 0.3s ease;
+}
+
+/* Warning states */
+.capacity-warning {
+    background: #f7b500 !important;
+}
+
+.capacity-danger {
+    background: #d13438 !important;
+}
 
 
 </style>
@@ -244,6 +281,28 @@ td:first-child { text-align:left; }
     <div class="fte-value" id="effectiveSprintFte">0.00</div>
 </div>
 
+
+
+
+
+
+<h2>Quarter Capacity Usage</h2>
+
+<div class="capacity-bar-wrapper">
+    <div class="capacity-bar-label">
+        <span>Used</span>
+        <span id="quarterCapacityLabel">0.00 / 0.00 FTE</span>
+    </div>
+    <div class="capacity-bar">
+        <div id="quarterCapacityFill"></div>
+    </div>
+</div>
+
+
+
+
+
+
 <h2>High level Capacity Planning</h2>
 <button class="add-item-btn" onclick="addItem()">+ Add Work Item</button>
 
@@ -256,7 +315,7 @@ td:first-child { text-align:left; }
 </div>
 
 <footer style="margin-top:40px;text-align:center;font-size:12px;color:#666;">
-    Quarter FTE Capacity Calculator <strong>v3.1</strong><br>
+    Quarter FTE Capacity Calculator <strong>v3.2</strong><br>
     Published on <strong>17 April 2026</strong><br>
     Powered by <strong>Five9 TPM</strong><br>
 </footer>
@@ -271,6 +330,7 @@ function calculate() {
     const vacations = +document.getElementById("vacations").value;
     const holidays  = +document.getElementById("holidays").value;
     const absences  = +document.getElementById("absences").value;
+    
     const sprints   = +document.getElementById("sprints").value;
     const rtbPct    = +document.getElementById("rtbPct").value;
     const qcPct     = +document.getElementById("qcPct").value;
@@ -286,11 +346,21 @@ function calculate() {
     const bufferFte = qcFte * bufferPct / 100;
     const effective = qcFte - bufferFte;
 
-    rtbFte.textContent = (totalFte * rtbPct / 100).toFixed(2);
-    qcFteEl = qcFte;
-    qcFte.textContent = qcFte.toFixed(2);
-    bufferFte.textContent = bufferFte.toFixed(2);
-    effectiveSprintFte.textContent = effective.toFixed(2);
+    const rtbFteValue = totalFte * rtbPct / 100;
+const qcFteValue = qcFte;
+const bufferFteValue = bufferFte;
+
+document.getElementById("rtbFte").textContent =
+    rtbFteValue.toFixed(2);
+
+document.getElementById("qcFte").textContent =
+    qcFteValue.toFixed(2);
+
+document.getElementById("bufferFte").textContent =
+    bufferFteValue.toFixed(2);
+
+document.getElementById("effectiveSprintFte").textContent =
+    effective.toFixed(2);
 
     if (sprintCount !== sprints) {
         buildTable(sprints);
@@ -399,12 +469,65 @@ const fte = res * ftePerResource;
             }
         }
     });
+    
+    /* ===== Quarter Capacity Bar Update ===== */
+
+// Capacidade total do quarter
+const quarterCapacity = effective * sprintCount;
+
+// Capacidade usada (acumulado)
+let usedCapacity = 0;
+
+document.querySelectorAll("#itemsTable tbody tr").forEach(r => {
+    const res = +r.cells[1].querySelector("input").value;
+    const spr = +r.cells[2].querySelector("input").value;
+
+    const ftePerResource =
+        totalResources > 0 ? (effective / totalResources) : 0;
+
+    const itemFte = res * ftePerResource;
+    usedCapacity += itemFte * spr;
+});
+
+// Percentagem usada
+const usagePct = quarterCapacity > 0
+    ? Math.min((usedCapacity / quarterCapacity) * 100, 100)
+    : 0;
+
+// Atualizar texto
+document.getElementById("quarterCapacityLabel").textContent =
+    `${usedCapacity.toFixed(2)} / ${quarterCapacity.toFixed(2)} FTE`;
+
+// Atualizar barra
+const bar = document.getElementById("quarterCapacityFill");
+bar.style.width = usagePct + "%";
+
+// Estados visuais
+bar.classList.remove("capacity-warning", "capacity-danger");
+
+if (usagePct >= 100) {
+    bar.classList.add("capacity-danger");
+} else if (usagePct >= 80) {
+    bar.classList.add("capacity-warning");
+}
+
+    
+    
+    
+    
+    
 
     for (let i=0;i<sprintCount;i++) {
         sumRow.cells[i+1].textContent = sums[i].toFixed(2);
         sumRow.cells[i+1].className = sums[i] >= effective ? "value-green" : "value-green";
     }
 }
+
+
+
+
+
+
 
 /* Burn‑up chart unchanged */
 function drawFteBurnupChartFromTable() {
@@ -439,3 +562,5 @@ calculate();
 </script>
 </body>
 </html>
+
+
