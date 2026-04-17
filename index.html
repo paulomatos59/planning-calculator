@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quarter FTE Capacity Calculator</title>
+
+<style>
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f3f5f7;
+    padding: 20px;
+}
+
+.calculator {
+    background: #ffffff;
+    max-width: 1200px;
+    margin: auto;
+    padding: 30px;
+    border-radius: 14px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+h1 {
+    text-align: center;
+    color: #003a8f;
+}
+
+h2 {
+    text-align: left;
+    color: #003a8f;
+}
+
+
+
+h2 {
+    margin-top: 28px;
+    border-bottom: 1px solid #d6e6f7;
+    padding-bottom: 6px;
+}
+
+/* FORM */
+.form-section { display:flex; justify-content:center; margin-top:18px; }
+.form-box { width:320px; }
+label { font-weight:600; display:block; margin-top:14px; }
+input {
+    width:100%;
+    padding:7px;
+    border-radius:6px;
+    border:1px solid #bbb;
+    margin-top:4px;
+}
+.calculate-btn {
+    width:100%;
+    margin-top:18px;
+    padding:20px;
+    font-weight:bold;
+    background:#0078d4;
+    color:white;
+    border:none;
+    border-radius:16px;
+    cursor:pointer;
+}
+
+/* SUMMARY */
+.capacity-summary {
+    background:#dfeefb;
+    border:3px solid #b8d0ff;
+    border-radius:18px;
+    padding:22px;
+    margin:24px auto 0;
+    width:520px;
+    text-align:center;
+}
+.capacity-summary .fte-value {
+    font-size:30px;
+    font-weight:800;
+}
+
+/* CARDS */
+.card-green {
+    border:2px solid #9fddb6;
+    border-radius:10px;
+    padding:16px;
+    max-width:420px;
+    margin:0 auto;
+}
+.card-amber {
+    border:2px solid #ffd88a;
+    border-radius:10px;
+    padding:16px;
+    max-width:420px;
+    margin:0 auto;
+}
+.alloc-row {
+    display:grid;
+    grid-template-columns:140px 80px 1fr;
+    gap:10px;
+    align-items:center;
+}
+.alloc-row input { width:70px; text-align:center; }
+.alloc-value { text-align:right; font-weight:bold; }
+
+/* ADD ITEM */
+.add-item-wrapper {
+    display:flex;
+    justify-content:center;
+    margin-top:10px;
+}
+.add-item-btn {
+    padding:6px 14px;
+    font-size:12px;
+    font-weight:600;
+    background:#0078d4;
+    color:white;
+    border:none;
+    border-radius:4px;
+    cursor:pointer;
+}
+
+/* TABLE */
+table {
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+    font-size:13px;
+}
+th, td {
+    border-bottom:1px solid #ddd;
+    padding:6px;
+    text-align:center;
+}
+th { background:#f0f4fa; font-weight:700; }
+td:first-child, th:first-child { text-align:left; }
+
+.value-green { color:#2e8b57; font-weight:bold; }
+.value-red   { color:#d13438; font-weight:bold; }
+
+tfoot td {
+    border-top:2px solid #999;
+    font-weight:700;
+}
+
+/* GRAPH */
+#fteChartContainer {
+    display:flex;
+    justify-content:center;
+    margin-top:16px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="calculator">
+<h1>Quarter FTE Capacity Calculator</h1>
+
+<br>
+<br>
+<!-- TEAM -->
+<!--<h2>Team</h2>-->
+<div class="form-section"><div class="form-box">
+    <label># of Resources</label>
+    <input id="resources" type="number" value="10">
+
+    <label># of Vacation Days (All Team)</label>
+    <input id="vacations" type="number" value="0">
+
+    <label># of Holidays</label>
+    <input id="holidays" type="number" value="0">
+
+    <label># of Absence Days (All Team)</label>
+    <input id="absences" type="number" value="0">
+</div></div>
+
+<div class="form-section"><div class="form-box">
+    <label># of Sprints in the Quarter</label>
+    <input id="sprints" type="number" value="6">
+    <button class="calculate-btn" onclick="calculate()">Calculate</button>
+</div></div>
+
+<br>
+<br>
+<!-- SUMMARY -->
+
+<div class="capacity-summary">
+    Net Available Hours: <span id="netHours">0</span> hrs<br><br>
+    <strong>Total FTE (Quarter)</strong><br>
+    <div class="fte-value" id="fteQuarter">0.00</div>
+</div>
+<br>
+<br>
+<br>
+
+<!-- ALLOCATION -->
+<h2>Allocation for the Quarter</h2>
+<div class="card-green">
+    <div class="alloc-row">
+        <strong>RTB %</strong>
+        <input id="rtbPct" type="number" value="0">
+        <span id="rtbFte" class="alloc-value">0.00</span>
+    </div>
+    <div class="alloc-row">
+        <strong>Commits %</strong>
+        <input id="qcPct" type="number" value="100">
+        <span id="qcFte" class="alloc-value">0.00</span>
+    </div>
+</div>
+
+
+<!-- BUFFER -->
+<h2>Capacity Buffer</h2>
+<div class="card-amber">
+    <div class="alloc-row">
+        <strong>Buffer %</strong>
+        <input id="bufferPct" type="number" value="0">
+        <span id="bufferFte" class="alloc-value">0.00</span>
+    </div>
+</div>
+
+<div class="form-section"><div class="form-box">
+<button class="calculate-btn" onclick="calculate()">Calculate</button>
+</div></div>
+
+
+<br>
+<br>
+
+<!-- SPRINT CAPACITY -->
+<h2>Capacity Available for Quarter Commits</h2>
+<div class="capacity-summary">    
+        <strong>Effective FTE per Sprint</strong>
+        <div class="fte-value"
+        id="effectiveSprintFte">0.00
+    </div>
+</div>
+<br>
+<br>
+
+<!-- TABLE -->
+<h2>High level Capacity Planning</h2>
+<br>
+<div class="add-item-wrapper">
+    <button class="add-item-btn" onclick="addItem()">+ Add Work Item</button>
+</div>
+
+<table id="itemsTable"></table>
+<br>
+<br>
+<br>
+<!-- ✅ GRAPH BELOW TABLE -->
+<h2>Capacity Burn‑up Chart</h2>
+<div id="fteChartContainer">
+    <svg id="fteBurnupChart" width="700" height="260"></svg>
+</div>
+
+</div>
+
+<script>
+/* ====================== v1 – CÓDIGO CONGELADO ====================== */
+
+let sprintCount = null;
+
+function calculate() {
+    const resources = +document.getElementById("resources").value;
+    const vacations = +document.getElementById("vacations").value;
+    const holidays  = +document.getElementById("holidays").value;
+    const absences  = +document.getElementById("absences").value;
+    const sprints   = +document.getElementById("sprints").value;
+    const rtbPct    = +document.getElementById("rtbPct").value;
+    const qcPct     = +document.getElementById("qcPct").value;
+    const bufferPct = +document.getElementById("bufferPct").value;
+
+    const netHours = (resources * 480) - ((vacations + holidays + absences) * 8);
+    const totalFte = netHours / 480;
+
+    document.getElementById("netHours").textContent = netHours.toFixed(0);
+    document.getElementById("fteQuarter").textContent = totalFte.toFixed(2);
+
+    const qcFte = totalFte * qcPct / 100;
+    const bufferFte = qcFte * bufferPct / 100;
+    const effective = qcFte - bufferFte;
+
+    document.getElementById("rtbFte").textContent = (totalFte * rtbPct / 100).toFixed(2);
+    document.getElementById("qcFte").textContent = qcFte.toFixed(2);
+    document.getElementById("bufferFte").textContent = bufferFte.toFixed(2);
+    document.getElementById("effectiveSprintFte").textContent = effective.toFixed(2);
+
+    if (sprintCount !== sprints) {
+        buildTable(sprints);
+        sprintCount = sprints;
+    }
+
+    updateTable(effective, resources);
+    drawFteBurnupChartFromTable();
+}
+
+function buildTable(sc) {
+    let html = `<thead><tr>
+        <th>Work Item</th>
+        <th># Resources</th>
+        <th># Sprints</th>
+        <th>Item FTE</th>`;
+    for (let i=1;i<=sc;i++) html+=`<th>Sprint ${i}</th>`;
+    html+=`</tr></thead><tbody></tbody><tfoot>
+        <tr id="sumRow"><td colspan="4">Sum</td>`;
+    for (let i=0;i<sc;i++) html+=`<td>0.00</td>`;
+    html+=`</tr></tfoot>`;
+    document.getElementById("itemsTable").innerHTML = html;
+}
+
+function findNextAvailableSprint(effective) {
+    const sums = Array(sprintCount).fill(0);
+    document.querySelectorAll("#itemsTable tbody tr").forEach(r=>{
+        const fte = parseFloat(r.cells[3].textContent)||0;
+        const spr = +r.cells[2].querySelector("input").value;
+        const start = +(r.dataset.start||0);
+        for (let i=0;i<spr && start+i<sprintCount;i++) sums[start+i]+=fte;
+    });
+    for (let i=0;i<sprintCount;i++) if (sums[i] < effective) return i;
+    return 0;
+}
+
+function addItem() {
+    const effective = +document.getElementById("effectiveSprintFte").textContent;
+    const row = document.createElement("tr");
+    row.dataset.start = findNextAvailableSprint(effective);
+    row.innerHTML = `
+        <td><input value="Item"></td>
+        <td><input type="number" value="1"></td>
+        <td><input type="number" value="1"></td>
+        <td>0.00</td>
+        ${"<td></td>".repeat(sprintCount)}
+    `;
+    row.querySelectorAll("input").forEach(input =>
+        input.oninput = () => updateTable(effective, +document.getElementById("resources").value)
+    );
+    document.querySelector("#itemsTable tbody").appendChild(row);
+    updateTable(effective, +document.getElementById("resources").value);
+    drawFteBurnupChartFromTable();
+}
+
+function updateTable(effective, totalResources) {
+    const sums = Array(sprintCount).fill(0);
+    const ftePerResource = totalResources > 0 ? effective / totalResources : 0;
+
+    document.querySelectorAll("#itemsTable tbody tr").forEach(r=>{
+        const res = +r.cells[1].querySelector("input").value;
+        const spr = +r.cells[2].querySelector("input").value;
+        const start = +(r.dataset.start||0);
+
+        const rawItemFte = res * ftePerResource;
+        const itemFte = Math.min(rawItemFte, effective);
+
+        r.cells[3].textContent = itemFte.toFixed(2);
+
+        for (let i=0;i<sprintCount;i++) r.cells[4+i].textContent="";
+        for (let i=0;i<spr && start+i<sprintCount;i++) {
+            r.cells[4+start+i].textContent = itemFte.toFixed(2);
+            sums[start+i]+=itemFte;
+        }
+    });
+
+    const sumCells = document.getElementById("sumRow").cells;
+    for (let i=0;i<sprintCount;i++) {
+        sumCells[1+i].textContent = sums[i].toFixed(2);
+        sumCells[1+i].className =
+            sums[i] > effective ? "value-red" : "value-green";
+    }
+}
+
+/* ====================== GRÁFICO PASSIVO ====================== */
+
+function drawFteBurnupChartFromTable() {
+    const svg = document.getElementById("fteBurnupChart");
+    const sumRow = document.getElementById("sumRow");
+    if (!svg || !sumRow) return;
+
+    const capacity = parseFloat(document.getElementById("effectiveSprintFte").textContent) || 0;
+    const usage = Array.from(sumRow.cells).slice(1).map(c => parseFloat(c.textContent) || 0);
+
+    const width = 700, height = 260, padding = 40;
+    svg.innerHTML = "";
+
+    const maxY = Math.max(capacity, ...usage) * 1.1 || 1;
+    const stepX = (width - padding*2) / (usage.length - 1 || 1);
+    const scaleY = y => height - padding - (y/maxY)*(height-padding*2);
+
+    svg.innerHTML += `
+        <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" stroke="#888"/>
+        <line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="#888"/>
+    `;
+
+    usage.forEach((_,i)=>{
+        svg.innerHTML += `<text x="${padding+stepX*i}" y="${height-10}"
+            text-anchor="middle" font-size="10">S${i+1}</text>`;
+    });
+
+    const yCap = scaleY(capacity);
+    svg.innerHTML += `
+        <line x1="${padding}" y1="${yCap}" x2="${width-padding}" y2="${yCap}"
+        stroke="#2e8b57" stroke-width="2" stroke-dasharray="4 4"/>`;
+
+    let path="";
+    usage.forEach((v,i)=>{
+        const x=padding+stepX*i, y=scaleY(v);
+        path+=i===0?`M ${x} ${y}`:` L ${x} ${y}`;
+        svg.innerHTML+=`<circle cx="${x}" cy="${y}" r="3"
+            fill="${v>capacity?"#d13438":"#0078d4"}"/>`;
+    });
+
+    svg.innerHTML+=`<path d="${path}" fill="none" stroke="#0078d4" stroke-width="2"/>`;
+}
+
+/* INIT */
+calculate();
+</script>
+
+</body>
+</html>
+
+
