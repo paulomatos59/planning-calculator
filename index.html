@@ -112,6 +112,32 @@ td:first-child { text-align:left; }
     cursor:pointer;
 }
 
+/* Normaliza TODOS os inputs da tabela */
+#itemsTable input[type="text"],
+#itemsTable input[type="number"] {
+    height: 30px;
+    padding: 6px 8px;
+    font-size: 13px;
+    line-height: 18px;
+    box-sizing: border-box;
+}
+
+/* Ajuste fino da linha da tabela */
+#itemsTable td {
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+/* Mantém alinhamento do bloco Work Item */
+.work-item-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+
+
+
 /* GRAPH */
 #fteChartContainer {
     display:flex;
@@ -230,9 +256,9 @@ td:first-child { text-align:left; }
 </div>
 
 <footer style="margin-top:40px;text-align:center;font-size:12px;color:#666;">
-    Quarter FTE Capacity Calculator <strong>Version v2.2</strong><br>
+    Quarter FTE Capacity Calculator <strong>Version v2.3</strong><br>
     Published on <strong>17 April 2026</strong><br>
-    Powered by <strong>Five9 TPM</strong>
+    Powered by <strong>Five9 TPM</strong><br>
 </footer>
 
 <script>
