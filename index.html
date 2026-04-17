@@ -256,7 +256,7 @@ td:first-child { text-align:left; }
 </div>
 
 <footer style="margin-top:40px;text-align:center;font-size:12px;color:#666;">
-    Quarter FTE Capacity Calculator <strong>v3.0</strong><br>
+    Quarter FTE Capacity Calculator <strong>v3.1</strong><br>
     Published on <strong>17 April 2026</strong><br>
     Powered by <strong>Five9 TPM</strong><br>
 </footer>
@@ -364,13 +364,19 @@ function removeRow(btn) {
 
 /* ===== STRICT PACKING LOGIC ===== */
 
-function updateTable(effective) {
+function updateTable(effective, totalResources) {
     const sums = Array(sprintCount).fill(0);
 
     document.querySelectorAll("#itemsTable tbody tr").forEach(r => {
         const res = +r.cells[1].querySelector("input").value;
-        const spr = +r.cells[2].querySelector("input").value;
-        const fte = res;
+		const spr = +r.cells[2].querySelector("input").value;
+
+/* ✅ Correct FTE calculation */
+const ftePerResource = totalResources > 0 
+    ? (effective / totalResources) 
+    : 0;
+
+const fte = res * ftePerResource;
 
         /* ⛔ HARD STOP PER ITEM */
         if (fte > effective) {
