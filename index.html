@@ -256,7 +256,7 @@ td:first-child { text-align:left; }
 </div>
 
 <footer style="margin-top:40px;text-align:center;font-size:12px;color:#666;">
-    Quarter FTE Capacity Calculator <strong>v2.3</strong><br>
+    Quarter FTE Capacity Calculator <strong>v3.0</strong><br>
     Published on <strong>17 April 2026</strong><br>
     Powered by <strong>Five9 TPM</strong><br>
 </footer>
@@ -301,32 +301,14 @@ function calculate() {
     drawFteBurnupChartFromTable();
 }
 
-/* 🔧 RESTORED FUNCTION */
-function findNextAvailableSprint(effective) {
-    const sums = Array(sprintCount).fill(0);
-
-    document.querySelectorAll("#itemsTable tbody tr").forEach(r => {
-        const fte = parseFloat(r.cells[3].textContent) || 0;
-        const spr = +r.cells[2].querySelector("input").value;
-        const start = +(r.dataset.start || 0);
-
-        for (let i = 0; i < spr && start + i < sprintCount; i++) {
-            sums[start + i] += fte;
-        }
-    });
-
-    for (let i = 0; i < sprintCount; i++) {
-        if (sums[i] < effective) return i;
-    }
-    return 0;
-}
+/* ===== TABLE ===== */
 
 function buildTable(sc) {
     let html = `<thead><tr>
         <th>Work Item</th>
         <th># Resources</th>
         <th># Sprints</th>
-        <th>FTEs</th>`;
+        <th>FTE</th>`;
     for (let i=1;i<=sc;i++) html+=`<th>Sprint ${i}</th>`;
     html+=`</tr></thead><tbody></tbody><tfoot>
         <tr id="sumRow"><td colspan="4">Sum</td>`;
@@ -335,26 +317,43 @@ function buildTable(sc) {
     itemsTable.innerHTML = html;
 }
 
+/* ✅ Check if any sprint still has capacity */
+function hasAvailableCapacity(effective) {
+    if (!window.sumRow) return true;
+    const sums = Array.from(sumRow.cells).slice(1).map(c => +c.textContent || 0);
+    return sums.some(v => v < effective);
+}
+
 function addItem() {
     const effective = +effectiveSprintFte.textContent;
-    const row = document.createElement("tr");
 
-    row.dataset.start = findNextAvailableSprint(effective);
+    /* ⛔ Block creation if no sprint has capacity */
+    if (!hasAvailableCapacity(effective)) {
+        alert("No remaining FTE capacity available in any sprint.");
+        return;
+    }
+
+    const row = document.createElement("tr");
 
     row.innerHTML = `
         <td>
             <div class="work-item-cell">
-    <button class="delete-btn" onclick="removeRow(this)">✕</button>
-    <input value="Item">
-</div>
+                <button class="delete-btn" onclick="removeRow(this)">✕</button>
+                <input value="Item">
+            </div>
         </td>
         <td><input type="number" value="1"></td>
         <td><input type="number" value="1"></td>
         <td>0.00</td>
         ${"<td></td>".repeat(sprintCount)}
     `;
-    row.querySelectorAll("input").forEach(i => i.oninput = calculate);
-    document.querySelector("#itemsTable tbody").appendChild(row);
+
+    row.querySelectorAll("input").forEach(inp => {
+        inp.onfocus = () => inp.dataset.prev = inp.value;
+        inp.oninput = calculate;
+    });
+
+    itemsTable.querySelector("tbody").appendChild(row);
     calculate();
 }
 
@@ -363,31 +362,41 @@ function removeRow(btn) {
     calculate();
 }
 
-function updateTable(effective, totalResources) {
-    const sums = Array(sprintCount).fill(0);
-    const ftePerResource = totalResources ? effective / totalResources : 0;
+/* ===== STRICT PACKING LOGIC ===== */
 
-    document.querySelectorAll("#itemsTable tbody tr").forEach(r=>{
+function updateTable(effective) {
+    const sums = Array(sprintCount).fill(0);
+
+    document.querySelectorAll("#itemsTable tbody tr").forEach(r => {
         const res = +r.cells[1].querySelector("input").value;
         const spr = +r.cells[2].querySelector("input").value;
-        const start = +(r.dataset.start || 0);
+        const fte = res;
 
-        const itemFte = Math.min(res * ftePerResource, effective);
-        r.cells[3].textContent = itemFte.toFixed(2);
+        /* ⛔ HARD STOP PER ITEM */
+        if (fte > effective) {
+            r.cells[1].querySelector("input").value = r.cells[1].querySelector("input").dataset.prev;
+            alert("This item exceeds the available FTE per sprint.");
+            return;
+        }
 
-        for (let i=0;i<sprintCount;i++)
-            r.cells[4+i].textContent = "";
+        r.cells[3].textContent = fte.toFixed(2);
+        for (let i=0;i<sprintCount;i++) r.cells[4+i].textContent = "";
 
-        for (let i=0;i<spr && start+i<sprintCount;i++) {
-            r.cells[4+start+i].textContent = itemFte.toFixed(2);
-            sums[start+i] += itemFte;
+        /* Smart placement */
+        for (let s=0; s<sprintCount; s++) {
+            if (sums[s] + fte <= effective) {
+                for (let i=0;i<spr && s+i<sprintCount;i++) {
+                    sums[s+i] += fte;
+                    r.cells[4+s+i].textContent = fte.toFixed(2);
+                }
+                break;
+            }
         }
     });
 
-    const sumCells = sumRow.cells;
     for (let i=0;i<sprintCount;i++) {
-        sumCells[1+i].textContent = sums[i].toFixed(2);
-        sumCells[1+i].className = sums[i] > effective ? "value-red" : "value-green";
+        sumRow.cells[i+1].textContent = sums[i].toFixed(2);
+        sumRow.cells[i+1].className = sums[i] >= effective ? "value-green" : "value-green";
     }
 }
 
