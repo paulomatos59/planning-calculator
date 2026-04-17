@@ -339,7 +339,9 @@ function calculate() {
     const netHours = (resources * 480) - ((vacations + holidays + absences) * 8);
     const totalFte = netHours / 480;
 
-    netHours.textContent = netHours.toFixed(0);
+    document.getElementById("netHours").textContent =
+    netHours.toFixed(0);
+
     fteQuarter.textContent = totalFte.toFixed(2);
 
     const qcFte = totalFte * qcPct / 100;
@@ -562,5 +564,7 @@ calculate();
 </script>
 </body>
 </html>
+
+
 
 
