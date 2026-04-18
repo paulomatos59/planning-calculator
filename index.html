@@ -2,601 +2,1040 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Quarter FTE Capacity Calculator</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quarterly FTE Capacity Calculator v4.2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
+:root {
+  --bg: #f4f6fa;
+  --white: #ffffff;
+  --surface: #ffffff;
+  --surface2: #f0f3f9;
+  --border: #dde3ee;
+  --border2: #c8d0e0;
+  --accent: #0052cc;
+  --accent-light: #e8f0ff;
+  --accent2: #00875a;
+  --accent2-light: #e3f9f0;
+  --warn: #ff8b00;
+  --warn-light: #fff3e0;
+  --danger: #de350b;
+  --danger-light: #ffebe6;
+  --success: #00875a;
+  --success-light: #e3f9f0;
+  --text: #172b4d;
+  --text2: #344563;
+  --muted: #6b778c;
+  --muted2: #97a0af;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(9,30,66,.12), 0 0 0 1px rgba(9,30,66,.08);
+  --shadow-md: 0 4px 12px rgba(9,30,66,.15), 0 0 0 1px rgba(9,30,66,.08);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: #f3f5f7;
-    padding: 20px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.calculator {
-    background: #ffffff;
-    max-width: 1200px;
-    margin: auto;
-    padding: 30px;
-    border-radius: 14px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+/* TOP BAR */
+.top-bar {
+  background: var(--accent);
+  padding: 0 32px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
+.top-bar-logo { color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.top-bar-sep { color: rgba(255,255,255,0.25); }
+.top-bar-title { color: #fff; font-size: 13px; font-weight: 600; }
+.top-bar-version { margin-left: auto; background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 500; }
 
-h1 { text-align:center; color:#003a8f; }
-h2 {
-    margin-top:60px;
-    border-bottom:1px solid #d6e6f7;
-    padding-bottom:6px;
-    color:#003a8f;
+/* PAGE LAYOUT */
+.container { max-width: 980px; margin: 0 auto; padding: 28px 20px 80px; }
+.page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+.page-sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+/* STEP CARDS */
+.step { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 12px; border: 1px solid var(--border); overflow: hidden; }
+.step.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,82,204,0.15), var(--shadow); }
+.step.done { border-color: var(--accent2); }
+.step-header { display: flex; align-items: center; gap: 12px; padding: 16px 20px; user-select: none; }
+
+.step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+.step.active .step-num { background: var(--accent); border-color: var(--accent); color: #fff; }
+.step.done .step-num { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+.step-title { font-size: 15px; font-weight: 700; }
+.step-subtitle { font-size: 12px; color: var(--muted); }
+.step-badge { font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 600; }
+.step.active .step-badge { background: var(--accent-light); color: var(--accent); }
+.step.done .step-badge { background: var(--accent2-light); color: var(--accent2); }
+.step-chevron { display: none; }
+.step-body { padding: 0 20px 20px; border-top: 1px solid var(--border); }
+
+/* FORMS */
+.field-hint { font-size: 11px; color: var(--muted2); margin-top: 2px; line-height: 1.4; }
+.field-error { font-size: 11px; color: var(--danger); margin-top: 2px; line-height: 1.4; display: none; }
+input.error + .field-hint + .field-error,
+input.error ~ .field-error { display: block; }
+input.error { border-color: var(--danger) !important; }
+.form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding-top: 18px; }
+@media (max-width: 700px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 440px) { .form-grid { grid-template-columns: 1fr; } }
+.field { display: flex; flex-direction: column; gap: 6px; }
+label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+input[type="number"], input[type="text"], select {
+  background: var(--surface2); border: 1.5px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 8px 11px; font-size: 14px;
+  font-family: inherit; outline: none; transition: border-color .15s, box-shadow .15s;
+  width: 100%;
 }
-h3 {
-    margin-top:60px;
-    border-bottom:1px solid #d6e6f7;
-    padding-bottom:6px;
-    color:#0078d4;
-    text-align:center;
-}
+input:focus, select:focus { background: #fff; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,82,204,0.12); }
 
-/* FORM */
-.form-section { display:flex; justify-content:center; margin-top:18px; }
-.form-box { width:320px; }
-label { font-weight:600; display:block; margin-top:14px; }
-input {
-    width:100%;
-    padding:7px;
-    border-radius:6px;
-    border:1px solid #bbb;
-    margin-top:4px;
-}
-.calculate-btn {
-    width:100%;
-    margin-top:18px;
-    padding:20px;
-    font-weight:bold;
-    background:#0078d4;
-    color:white;
-    border:none;
-    border-radius:16px;
-    cursor:pointer;
-}
+/* RESULT BOXES */
+.result-row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.result-box { flex: 1; min-width: 130px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; }
+.result-box.hl-blue { background: var(--accent-light); border-color: #b3ccff; }
+.result-box.hl-green { background: var(--accent2-light); border-color: #79e2c3; }
+.result-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.result-val { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+.result-sub { font-size: 11px; color: var(--muted); }
 
-/* SUMMARY */
-.capacity-summary {
-    background:#dfeefb;
-    border:3px solid #b8d0ff;
-    border-radius:18px;
-    padding:22px;
-    margin:60px auto 0;
-    width:520px;
-    text-align:center;
-}
-.capacity-summary .fte-value {
-    font-size:30px;
-    font-weight:800;
-}
+/* FORMULA BOX */
+.formula-box { background: #f8f9fc; border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--radius-sm); padding: 14px 16px; margin-top: 14px; font-size: 12px; color: var(--text2); line-height: 1.8; }
+.formula-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 6px; }
+.formula-box strong { color: var(--text); font-weight: 700; }
+.formula-box code { font-family: 'SFMono-Regular', Consolas, monospace; }
 
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit; white-space: nowrap; transition: all 0.12s ease; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #0043a8; }
+.btn-green { background: var(--accent2); color: #fff; }
+.btn-green:hover { background: #006644; }
+.btn-ghost { background: var(--surface); color: var(--text2); border: 1.5px solid var(--border2); }
+.btn-ghost:hover { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+.btn-danger-ghost { background: transparent; color: var(--danger); border: 1px solid transparent; padding: 5px 9px; font-size: 12px; border-radius: 4px; }
+.btn-danger-ghost:hover { border-color: var(--danger); background: var(--danger-light); }
+.btn-sm { padding: 6px 13px; font-size: 12px; }
 
-/* SUMMARY2 */
-.capacity-summary2 {
-    background:#dff3e6;
-    border:3px solid #9fddb6;
-    border-radius:18px;
-    padding:22px;
-    margin:60px auto 0;
-    width:520px;
-    text-align:center;
-}
-.capacity-summary2 .fte-value {
-    font-size:40px;
-    font-weight:800;
-}
+/* ALERTS */
+.alert { display: flex; align-items: flex-start; gap: 8px; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; }
+.alert-info { background: var(--accent-light); border: 1px solid #b3ccff; color: var(--accent); }
+.alert-warn { background: var(--warn-light); border: 1px solid #ffe0a3; color: #7a4800; }
+.alert-danger { background: var(--danger-light); border: 1px solid #ffbdad; color: var(--danger); }
+.alert-success { background: var(--success-light); border: 1px solid #79e2c3; color: var(--success); }
 
+/* ALLOCATION GRID */
+.alloc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 18px; }
+@media (max-width: 600px) { .alloc-grid { grid-template-columns: 1fr; } }
+.alloc-card { background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 16px; }
+.alloc-card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 8px; }
+.alloc-val { font-size: 30px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.02em; }
+.alloc-fte-sub { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.alloc-rtb { background: var(--warn-light); border-color: #ffe0a3; }
+.alloc-rtb .alloc-val { color: var(--warn); }
+.alloc-commits { background: var(--accent-light); border-color: #b3ccff; }
+.alloc-commits .alloc-val { color: var(--accent); }
+.alloc-buffer { background: var(--accent2-light); border-color: #79e2c3; }
+.alloc-buffer .alloc-val { color: var(--accent2); }
 
+/* SLIDERS */
+input[type="range"] { -webkit-appearance: none; width: 100%; height: 5px; border-radius: 3px; background: rgba(0,0,0,0.1); outline: none; cursor: pointer; margin-bottom: 8px; border: none; box-shadow: none; padding: 0; }
+.alloc-rtb input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--warn); cursor: pointer; }
+.alloc-commits input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+.alloc-buffer input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent2); cursor: pointer; }
 
+/* TOTAL BAR */
+.total-bar-wrap { margin-top: 16px; }
+.total-bar-label { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 7px; font-weight: 600; }
+.total-bar { height: 44px; border-radius: 22px; background: var(--border); overflow: hidden; display: flex; }
+.bar-rtb, .bar-commits, .bar-used, .bar-over { position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: width 0.25s; }
+.bar-rtb { background: var(--warn); }
+.bar-commits { background: var(--accent); }
+.bar-used { background: var(--accent); }
+.bar-over { background: var(--danger); }
+.bar-inner-label { color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 8px; line-height: 1.2; text-align: center; pointer-events: none; }
 
-/* ALLOCATION */
-.card-green { border:2px solid #9fddb6; border-radius:10px; padding:16px; max-width:420px; margin:0 auto; }
-.card-amber { border:2px solid #ffd88a; border-radius:10px; padding:16px; max-width:420px; margin:0 auto; }
-.alloc-row {
-    display:grid;
-    grid-template-columns:140px 80px 1fr;
-    gap:10px;
-    align-items:center;
-}
-.alloc-row input { width:70px; text-align:center; }
-.alloc-value { text-align:right; font-weight:bold; }
+/* WORK ITEMS */
+.work-items-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.work-item { display: grid; grid-template-columns: 1fr 100px 100px 110px 36px; gap: 8px; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; }
+@media (max-width: 640px) { .work-item { grid-template-columns: 1fr 70px 70px 90px 36px; } }
+.work-item-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.work-item-fte { font-size: 14px; font-weight: 700; color: var(--accent); }
+/* WORK ITEMS TABLE */
+.wi-table { width:100%; border-collapse:collapse; margin-top:4px; font-size:13px; }
+.wi-table th { background:var(--surface2); border-bottom:2px solid var(--border2); padding:8px 10px; text-align:center; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); white-space:nowrap; }
+.wi-table th:first-child { text-align:left; }
+.wi-table td { border-bottom:1px solid var(--border); padding:6px 8px; text-align:center; vertical-align:middle; }
+.wi-table td:first-child { text-align:left; }
+.wi-table tfoot td { font-weight:700; font-size:12px; background:var(--surface2); border-top:2px solid var(--border2); padding:7px 10px; }
+.wi-table tfoot td:first-child { text-align:left; color:var(--muted); text-transform:uppercase; font-size:11px; letter-spacing:0.04em; }
+.wi-table input[type="text"] { width:100%; min-width:120px; padding:5px 8px; font-size:13px; }
+.wi-table input[type="number"] { width:68px; padding:5px 8px; font-size:13px; text-align:center; }
+.wi-sprint-cell { font-size:12px; font-weight:600; }
+.wi-sprint-filled { color:var(--accent); }
+.wi-sprint-empty  { color:transparent; }
+.wi-fte-cell { font-weight:700; color:var(--accent); font-size:13px; }
+.sum-over { color:var(--danger) !important; }
+.sum-ok   { color:var(--accent2) !important; }
+.wi-name-cell { display:flex; align-items:center; gap:6px; }
 
-/* TABLE */
-table {
-    width:100%;
-    border-collapse:collapse;
-    margin-top:20px;
-    font-size:13px;
-}
-th, td {
-    border-bottom:1px solid #ddd;
-    padding:6px;
-    text-align:center;
-}
-th { background:#f0f4fa; font-weight:700; }
-td:first-child { text-align:left; }
+/* EMPTY STATE */
+.empty-state { text-align: center; padding: 40px 20px; }
+.empty-icon { font-size: 32px; margin-bottom: 8px; }
+.empty-title { font-size: 15px; font-weight: 700; color: var(--text2); margin-bottom: 4px; }
+.empty-sub { font-size: 13px; color: var(--muted); }
 
-.value-green { color:#2e8b57; font-weight:bold; }
-.value-red   { color:#d13438; font-weight:bold; }
+/* CHART */
+.chart-wrap { margin-top: 20px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; }
+.chart-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 12px; }
 
-.work-item-cell {
-    display:flex;
-    align-items:center;
-    gap:6px;
-}
-.work-item-cell input { flex:1; }
+/* ACTIONS BAR */
+.actions-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+.spacer { flex: 1; }
 
-.delete-btn {
-    padding:4px 6px;
-    font-size:12px;
-    border-radius:4px;
-    border:1px solid #bbb;
-    background:#fff;
-    cursor:pointer;
-}
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(9,30,66,0.54); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 24px; width: 560px; max-width: 95vw; max-height: 80vh; display: flex; flex-direction: column; gap: 16px; }
+.modal h3 { font-size: 16px; font-weight: 700; }
+.modal pre { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-size: 12px; font-family: 'SFMono-Regular', Consolas, monospace; overflow-y: auto; flex: 1; white-space: pre-wrap; word-break: break-word; max-height: 380px; }
 
-/* Normaliza TODOS os inputs da tabela */
-#itemsTable input[type="text"],
-#itemsTable input[type="number"] {
-    height: 30px;
-    padding: 6px 8px;
-    font-size: 13px;
-    line-height: 18px;
-    box-sizing: border-box;
-}
-
-/* Ajuste fino da linha da tabela */
-#itemsTable td {
-    padding-top: 6px;
-    padding-bottom: 6px;
-}
-
-/* Mantém alinhamento do bloco Work Item */
-.work-item-cell {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-
-
-
-/* GRAPH */
-#fteChartContainer {
-    display:flex;
-    justify-content:center;
-    margin-top:16px;
-}
-
-
-/* Add Work Item — azul compacto */
-.add-item-btn {
-    margin-top: 10px;
-    padding: 6px 14px;
-    font-size: 12px;
-    font-weight: 600;
-    background: #0078d4;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-/* Work Item cell layout */
-.work-item-cell {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* Delete — vermelho */
-.delete-btn {
-    padding: 4px 6px;
-    font-size: 12px;
-    border-radius: 4px;
-    border: 1px solid #d13438;
-    background: #d13438;
-    color: white;
-    cursor: pointer;
-}
-
-/* Quarter Capacity Bar */
-.capacity-bar-wrapper {
-    max-width: 800px;
-    margin: 20px auto 36px;
-}
-
-.capacity-bar-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #333;
-}
-
-.capacity-bar {
-    height: 22px;
-    background: #e6e6e6;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-#quarterCapacityFill {
-    height: 100%;
-    width: 0%;
-    background: #0078d4;
-    transition: width 0.3s ease;
-}
-
-/* Warning states */
-.capacity-warning {
-    background: #f7b500 !important;
-}
-
-.capacity-danger {
-    background: #d13438 !important;
-}
-
-
+footer { text-align: center; padding-top: 40px; font-size: 12px; color: var(--muted2); }
+footer strong { color: var(--muted); }
 </style>
 </head>
-
 <body>
 
-<div class="calculator">
-<h1>Quarterly FTE Capacity Calculator</h1>
-
-<!-- TEAM -->
-<br>
-<h2>Step 1 | Define Your Team Capacity</h2>
-
-<div class="form-section"><div class="form-box">
-    <label>Total Team Resources</label>
-    <input id="resources" type="number" value="10">
-    <label>Total Vacation Days (Entire Team)</label>
-    <input id="vacations" type="number" value="0">
-    <label>Public Holidays (Days)</label>
-    <input id="holidays" type="number" value="0">
-    <label>Other Absence Days (Entire Team)</label>
-    <input id="absences" type="number" value="0">
-</div></div>
-
-<div class="form-section"><div class="form-box">
-    <label># of Sprints in the Quarter</label>
-    <input id="sprints" type="number" value="6">
-    <button class="calculate-btn" onclick="calculate()">Calculate Team Capacity (FTE)</button>
-</div></div>
-
-<div class="capacity-summary">
-   Net Available Hours: <span id="netHours">0</span> hrs<br><br>
-    <strong>Total FTE (Quarter)</strong>
-    <div class="fte-value" id="fteQuarter">0.00</div>
+<div class="top-bar">
+  <span class="top-bar-logo">Powered by Five9 | TPM</span>
+  <span class="top-bar-sep">›</span>
+  <span class="top-bar-title">Quarterly FTE Capacity Calculator</span>
+  <span class="top-bar-version">v4.2</span>
 </div>
 
-<br>
-<h2>Step 2 | Allocate Team Capacity for the Quarter </h2>
-<div class="card-green">
-    <div class="alloc-row">
-        <strong>Run the Business (RTB) %</strong>
-        <input id="rtbPct" type="number" value="0">
-        <span id="rtbFte" class="alloc-value">0.00</span>
+<div class="container">
+  <div class="page-title">Quarterly FTE Capacity Calculator</div>
+  <div class="page-sub">Understand how much your team can deliver this quarter.</div>
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <div class="step-header" onclick="toggleStep('step1')">
+      <div class="step-num" id="step1-num"><span>1</span></div>
+      <div style="flex:1">
+        <div class="step-title">Define Team Capacity</div>
+        <div class="step-subtitle">Set team size, absences, and sprint structure</div>
+      </div>
+      <span class="step-badge" id="s1-badge"></span>
+      <span class="step-chevron">›</span>
     </div>
-    <div class="alloc-row">
-        <strong>Commits %</strong>
-        <input id="qcPct" type="number" value="100">
-        <span id="qcFte" class="alloc-value">0.00</span>
+    <div class="step-body">
+      <div class="form-grid">
+        <div class="field">
+          <label>Total Team Resources(*)</label>
+          <input type="number" id="resources" min="1" placeholder="e.g. 10" oninput="validateField(this,1,500);autoCalc()">
+          <span class="field-hint">Number of people</span>
+          <span class="field-error">Must be ≥ 1</span>
+        </div>
+        <div class="field">
+          <label>Quarter(*)</label>
+          <select id="quarter" onchange="updateQuarterDays()">
+            <option value="">— Select —</option>
+            <option value="Q2-2026">Q2 2026 (Apr–Jun)</option>
+            <option value="Q3-2026">Q3 2026 (Jul–Sep)</option>
+            <option value="Q4-2026">Q4 2026 (Oct–Dec)</option>
+            <option value="Q1-2027">Q1 2027 (Jan–Mar)</option>
+            <option value="Q2-2027">Q2 2027 (Apr–Jun)</option>
+            <option value="Q3-2027">Q3 2027 (Jul–Sep)</option>
+            <option value="Q4-2027">Q4 2027 (Oct–Dec)</option>
+          </select>
+          <span class="field-hint">Auto-fills working days</span>
+        </div>
+        <div class="field">
+          <label>Working Days (Quarter)(*)</label>
+          <input type="number" id="workingDays" min="1" placeholder="e.g. 65" oninput="validateField(this,1,999);autoCalc()">
+          <span class="field-hint">Auto-filled from quarter</span>
+          <span class="field-error">Must be ≥ 1</span>
+        </div>
+        <div class="field">
+          <label>Hours per Day(*)</label>
+          <input type="number" id="hoursPerDay" min="1" max="24" value="8" oninput="validateField(this,1,24);autoCalc()">
+          <span class="field-hint">Standard working hours</span>
+          <span class="field-error">Must be 1–24</span>
+        </div>
+        <div class="field">
+          <label>Vacation Days (Team Total)</label>
+          <input type="number" id="vacationDays" min="0" placeholder="e.g. 30" oninput="validateField(this,0,9999);autoCalc()">
+          <span class="field-hint">Sum across all members</span>
+          <span class="field-error">Must be ≥ 0</span>
+        </div>
+        <div class="field">
+          <label>Public Holidays (Days)</label>
+          <input type="number" id="publicHolidays" min="0" placeholder="e.g. 5" oninput="validateField(this,0,99);autoCalc()">
+          <span class="field-hint">Per person (auto × team)</span>
+          <span class="field-error">Must be ≥ 0</span>
+        </div>
+        <div class="field">
+          <label>Other Absences (Team Total)</label>
+          <input type="number" id="otherAbsence" min="0" placeholder="e.g. 10" oninput="validateField(this,0,9999);autoCalc()">
+          <span class="field-hint">Sick, training, etc.</span>
+          <span class="field-error">Must be ≥ 0</span>
+        </div>
+        <div class="field">
+          <label># Sprints in Quarter(*)</label>
+          <input type="number" id="sprints" min="1" max="20" value="6" oninput="validateField(this,1,20);autoCalc()">
+          <span class="field-hint">Typically 6 × 2-week sprints</span>
+          <span class="field-error">Must be 1–20</span>
+        </div>
+      </div>
+
+      <div class="result-row" id="s1-results" style="display:none">
+        <div class="result-box">
+          <div class="result-label">Gross Hours</div>
+          <div class="result-val" id="r-gross">0</div>
+          <div class="result-sub">Resources × Days × Hrs</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">Absence Hours</div>
+          <div class="result-val" id="r-absence">0</div>
+          <div class="result-sub">Vacations + Holidays + Other</div>
+        </div>
+        <div class="result-box hl-blue">
+          <div class="result-label">Net Available Hours</div>
+          <div class="result-val" id="r-net">0</div>
+          <div class="result-sub">Per quarter</div>
+        </div>
+        <div class="result-box hl-green">
+          <div class="result-label">Total FTE (Quarter)</div>
+          <div class="result-val" id="r-fte">0.00</div>
+          <div class="result-sub">FTE = Net Hours ÷ (Days × Hrs)</div>
+        </div>
+      </div>
+
+      <div class="formula-box" id="formula1" style="display:none">
+        <div class="formula-title">📐 Formula breakdown</div>
+        <span id="formula1-text"></span>
+      </div>
+
+      <div class="actions-bar">
+        <button class="btn btn-primary" onclick="calcStep1()">Calculate Capacity →</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<h3>It is recommended to include a capacity buffer to absorb unplanned work:</h3>
-<div class="card-amber">
-    <div class="alloc-row">
-        <strong>Buffer %</strong>
-        <input id="bufferPct" type="number" value="0">
-        <span id="bufferFte" class="alloc-value">0.00</span>
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <div class="step-header" onclick="toggleStep('step2')">
+      <div class="step-num" id="step2-num"><span>2</span></div>
+      <div style="flex:1">
+        <div class="step-title">Allocate Capacity</div>
+        <div class="step-subtitle">Distribute FTE across RTB, Commits, and Buffer</div>
+      </div>
+      <span class="step-badge" id="s2-badge"></span>
+      <span class="step-chevron">›</span>
     </div>
-</div>
+    <div class="step-body">
+      <div class="alert alert-info" style="margin-top:18px; margin-bottom:14px">
+        ℹ️ <strong>RTB + New Development = 100%</strong> of Total FTE. The Buffer is applied separately on the New Development portion only.
+      </div>
 
-<div class="form-section"><div class="form-box">
-    <button class="calculate-btn" onclick="calculate()">Recalculate Capacity</button>
-</div></div>
+      <div class="alloc-grid">
+        <div class="alloc-card alloc-rtb">
+          <div class="alloc-card-label">Run the Business (RTB) %</div>
+          <div class="alloc-val" id="rtb-pct-lbl">30%</div>
+          <div class="alloc-fte-sub" id="rtb-fte-lbl">0.00 FTE</div>
+          <input type="range" id="rtb-slider" min="0" max="100" value="30" oninput="syncAlloc('rtb')">
+          <input type="number" id="rtb-num" min="0" max="100" value="30" oninput="syncAlloc('rtb-num')" style="font-size:13px;padding:6px 10px">
+        </div>
+        <div class="alloc-card alloc-commits">
+          <div class="alloc-card-label">New Development %</div>
+          <div class="alloc-val" id="commits-pct-lbl">70%</div>
+          <div class="alloc-fte-sub" id="commits-fte-lbl">0.00 FTE</div>
+          <input type="range" id="commits-slider" min="0" max="100" value="70" oninput="syncAlloc('commits')">
+          <input type="number" id="commits-num" min="0" max="100" value="70" oninput="syncAlloc('commits-num')" style="font-size:13px;padding:6px 10px">
+        </div>
+      </div>
 
+      <div class="total-bar-wrap">
+        <div class="total-bar-label">
+          <span>RTB + New Development</span>
+          <span id="alloc-total-lbl">100%</span>
+        </div>
+        <div class="total-bar">
+          <div class="bar-rtb" id="bar-rtb" style="width:30%"><span class="bar-inner-label" id="bar-rtb-label">30% · 0.00 FTE</span></div>
+          <div class="bar-commits" id="bar-commits" style="width:70%"><span class="bar-inner-label" id="bar-commits-label">70% · 0.00 FTE</span></div>
+        </div>
+      </div>
 
-<br>
-<br>
-<br>
-<h3>Available team capacity for quarterly commitments:</h3>
+      <div id="alloc-warn" class="alert alert-warn" style="display:none; margin-top:10px">
+        ⚠️ RTB + New Development = <strong id="alloc-sum-val">100</strong>%. Must sum to exactly 100%.
+      </div>
 
-<div class="capacity-summary2">
-    <strong>Effective Available FTE</strong>
-    <div class="fte-value" id="effectiveSprintFte">0.00</div>
-</div>
+      <div style="margin-top:20px; padding:16px; background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--radius-sm)">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);margin-bottom:12px">Buffer — applied on New Development FTE only</div>
+        <div class="alloc-card alloc-buffer" style="max-width:320px">
+          <div class="alloc-card-label">Buffer %</div>
+          <div class="alloc-val" id="buffer-pct-lbl">20%</div>
+          <div class="alloc-fte-sub" id="buffer-fte-lbl">0.00 FTE reserved</div>
+          <input type="range" id="buffer-slider" min="0" max="100" value="20" oninput="syncAlloc('buffer')">
+          <input type="number" id="buffer-num" min="0" max="100" value="20" oninput="syncAlloc('buffer-num')" style="font-size:13px;padding:6px 10px">
+        </div>
+        <div id="buffer-warn" class="alert alert-warn" style="display:none; margin-top:10px">
+          ⚠️ A buffer of 0% leaves no room for unplanned work. Recommended: 10–20%.
+        </div>
+      </div>
 
+      <div class="result-row" style="margin-top:16px">
+        <div class="result-box hl-green">
+          <div class="result-label">Effective Available FTE</div>
+          <div class="result-val" id="r-effectiveFTE">0.00</div>
+          <div class="result-sub">New Dev FTE − Buffer</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">RTB FTE</div>
+          <div class="result-val" id="r-rtbFTE">0.00</div>
+          <div class="result-sub">Operational / BAU</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">New Development FTE</div>
+          <div class="result-val" id="r-commitsFTE">0.00</div>
+          <div class="result-sub">Before buffer deduction</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">Buffer FTE</div>
+          <div class="result-val" id="r-bufferFTE">0.00</div>
+          <div class="result-sub">Reserved from New Dev</div>
+        </div>
+      </div>
 
-
-
-
-<h2>Step 3 | High‑Level Capacity Planning </h2>
-
-<div class="capacity-bar-wrapper">
-    <div class="capacity-bar-label">
-        <span>Used</span>
-        <span id="quarterCapacityLabel">0.00 / 0.00 FTE</span>
+      <div class="actions-bar">
+        <button class="btn btn-primary" onclick="calcStep2()">Apply Allocation →</button>
+      </div>
     </div>
-    <div class="capacity-bar">
-        <div id="quarterCapacityFill"></div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step3">
+    <div class="step-header" onclick="toggleStep('step3')">
+      <div class="step-num" id="step3-num"><span>3</span></div>
+      <div style="flex:1">
+        <div class="step-title">Capacity Planning</div>
+        <div class="step-subtitle">Add work items and track FTE usage</div>
+      </div>
+      <span class="step-badge" id="s3-badge"></span>
+      <span class="step-chevron">›</span>
     </div>
+    <div class="step-body">
+      <div class="total-bar-wrap" style="margin-top:14px">
+        <div class="total-bar-label">
+          <span>Quarter Capacity Usage</span>
+          <span id="quarter-capacity-label">0.00 / 0.00 FTE</span>
+        </div>
+        <div class="total-bar">
+          <div class="bar-used" id="quarter-capacity-fill" style="width:0%"><span class="bar-inner-label" id="quarter-capacity-bar-label"></span></div>
+        </div>
+      </div>
+
+      <div id="over-alert" class="alert alert-danger" style="display:none; margin-top:12px">
+        🚨 Capacity exceeded — committed FTE is above the available limit.
+      </div>
+      <div id="ok-alert" class="alert alert-success" style="display:none; margin-top:12px">
+        ✅ Within capacity — all work items fit in the available FTE.
+      </div>
+
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No work items yet</div>
+        <div class="empty-sub">Add your prioritised work items to start planning capacity allocation</div>
+      </div>
+
+      <div style="overflow-x:auto; margin-top:14px; display:none" id="wi-table-wrap">
+        <table class="wi-table" id="itemsTable"></table>
+      </div>
+
+      <div style="margin-top:12px">
+        <button class="btn btn-green" onclick="addWorkItem()">+ Add Work Item</button>
+      </div>
+
+      <div class="chart-wrap" id="chartWrap" style="display:none">
+        <div class="chart-title">Capacity Burn-up Chart</div>
+        <canvas id="burnupChart" height="140"></canvas>
+      </div>
+
+      <div class="actions-bar">
+        <button class="btn btn-ghost btn-sm" onclick="openExport()">⬆ Export Summary</button>
+        <button class="btn btn-ghost btn-sm" onclick="copySummary()">📋 Copy Summary</button>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost btn-sm" onclick="resetAll()" style="color:var(--danger);border-color:#ffbdad">🗑 Reset All</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Quarterly FTE Capacity Calculator <strong>v4.2</strong> · April 2026 · Powered by <strong>Five9 TPM</strong>
+  </footer>
 </div>
 
-
-
-
-<h3>Add prioritized work items and estimate required resources and sprints</h3>
-<button class="add-item-btn" onclick="addItem()">+ Add Work Item</button>
-
-<table id="itemsTable"></table>
-
-<h3>Capacity Burn‑up Chart</h3>
-<div id="fteChartContainer">
-    <svg id="fteBurnupChart" width="700" height="260"></svg>
+<!-- Export Modal -->
+<div class="modal-overlay" id="modal" onclick="handleModalOverlayClick(event)">
+  <div class="modal">
+    <h3>📄 Export Summary</h3>
+    <pre id="export-text"></pre>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary" onclick="copyFromModal()">Copy to Clipboard</button>
+    </div>
+  </div>
 </div>
-</div>
-
-<footer style="margin-top:40px;text-align:center;font-size:12px;color:#666;">
-    Quarter FTE Capacity Calculator <strong>v3.3</strong><br>
-    Published on <strong>17 April 2026</strong><br>
-    Powered by <strong>Five9 TPM</strong><br>
-</footer>
 
 <script>
-/* ===================== ONLY FIX: START SPRINT LOGIC RESTORED ===================== */
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let state = {
+  quarter: '',
+  resources: 0,
+  workingDays: 0,
+  hoursPerDay: 8,
+  vacationDays: 0,
+  publicHolidays: 0,
+  otherAbsence: 0,
+  sprints: 6,
+  totalFTE: 0,
+  netHours: 0,
+  rtbPct: 30,
+  commitsPct: 70,
+  bufferPct: 20,
+  effectiveFTE: 0,
+  workItems: []
+};
 
-let sprintCount = null;
+const QDDAYS = {
+  'Q1-2026': 64, 'Q2-2026': 65, 'Q3-2026': 66, 'Q4-2026': 64,
+  'Q1-2027': 64, 'Q2-2027': 65, 'Q3-2027': 66, 'Q4-2027': 65
+};
 
-function calculate() {
-    const resources = +document.getElementById("resources").value;
-    const vacations = +document.getElementById("vacations").value;
-    const holidays  = +document.getElementById("holidays").value;
-    const absences  = +document.getElementById("absences").value;
-    
-    const sprints   = +document.getElementById("sprints").value;
-    const rtbPct    = +document.getElementById("rtbPct").value;
-    const qcPct     = +document.getElementById("qcPct").value;
-    const bufferPct = +document.getElementById("bufferPct").value;
+let chart = null;
 
-    const netHours = (resources * 480) - ((vacations + holidays + absences) * 8);
-    const totalFte = netHours / 480;
-
-    document.getElementById("netHours").textContent =
-    netHours.toFixed(0);
-
-    fteQuarter.textContent = totalFte.toFixed(2);
-
-    const qcFte = totalFte * qcPct / 100;
-    const bufferFte = qcFte * bufferPct / 100;
-    const effective = qcFte - bufferFte;
-
-    const rtbFteValue = totalFte * rtbPct / 100;
-const qcFteValue = qcFte;
-const bufferFteValue = bufferFte;
-
-document.getElementById("rtbFte").textContent =
-    rtbFteValue.toFixed(2);
-
-document.getElementById("qcFte").textContent =
-    qcFteValue.toFixed(2);
-
-document.getElementById("bufferFte").textContent =
-    bufferFteValue.toFixed(2);
-
-document.getElementById("effectiveSprintFte").textContent =
-    effective.toFixed(2);
-
-    if (sprintCount !== sprints) {
-        buildTable(sprints);
-        sprintCount = sprints;
-    }
-
-    updateTable(effective, resources);
-    drawFteBurnupChartFromTable();
+// ─── PERSISTENCE ─────────────────────────────────────────────────────────────
+function save() {
+  try { localStorage.setItem('fte_v42', JSON.stringify(state)); } catch(e) {}
 }
 
-/* ===== TABLE ===== */
+function load() {
+  try {
+    const raw = localStorage.getItem('fte_v42');
+    if (!raw) return;
+    state = { ...state, ...JSON.parse(raw) };
 
-function buildTable(sc) {
-    let html = `<thead><tr>
-        <th>Work Item</th>
-        <th># Resources</th>
-        <th># Sprints</th>
-        <th>FTE</th>`;
-    for (let i=1;i<=sc;i++) html+=`<th>Sprint ${i}</th>`;
-    html+=`</tr></thead><tbody></tbody><tfoot>
-        <tr id="sumRow"><td colspan="4">Sum</td>`;
-    for (let i=0;i<sc;i++) html+=`<td>0.00</td>`;
-    html+=`</tr></tfoot>`;
-    itemsTable.innerHTML = html;
-}
-
-/* ✅ Check if any sprint still has capacity */
-function hasAvailableCapacity(effective) {
-    if (!window.sumRow) return true;
-    const sums = Array.from(sumRow.cells).slice(1).map(c => +c.textContent || 0);
-    return sums.some(v => v < effective);
-}
-
-function addItem() {
-    const effective = +effectiveSprintFte.textContent;
-
-    /* ⛔ Block creation if no sprint has capacity */
-    if (!hasAvailableCapacity(effective)) {
-        alert("No remaining FTE capacity available in any sprint.");
-        return;
-    }
-
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-        <td>
-            <div class="work-item-cell">
-                <button class="delete-btn" onclick="removeRow(this)">✕</button>
-                <input value="Item">
-            </div>
-        </td>
-        <td><input type="number" value="1"></td>
-        <td><input type="number" value="1"></td>
-        <td>0.00</td>
-        ${"<td></td>".repeat(sprintCount)}
-    `;
-
-    row.querySelectorAll("input").forEach(inp => {
-        inp.onfocus = () => inp.dataset.prev = inp.value;
-        inp.oninput = calculate;
+    // Restore Step 1 fields
+    const s1fields = ['resources','workingDays','hoursPerDay','vacationDays','publicHolidays','otherAbsence','sprints'];
+    s1fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && state[id] !== undefined && state[id] !== 0) el.value = state[id];
     });
 
-    itemsTable.querySelector("tbody").appendChild(row);
-    calculate();
+    // Restore quarter dropdown
+    if (state.quarter) document.getElementById('quarter').value = state.quarter;
+
+    // Restore Step 2 sliders & inputs
+    document.getElementById('rtb-slider').value = state.rtbPct;
+    document.getElementById('rtb-num').value = state.rtbPct;
+    document.getElementById('commits-slider').value = state.commitsPct;
+    document.getElementById('commits-num').value = state.commitsPct;
+    document.getElementById('buffer-slider').value = state.bufferPct;
+    document.getElementById('buffer-num').value = state.bufferPct;
+
+    // Re-run calculations
+    if (state.totalFTE > 0) {
+      autoCalc();
+      updateAllocDisplay();
+      renderWorkItems();
+      markDone('step1');
+    }
+    if (state.effectiveFTE > 0) {
+      markDone('step2');
+    }
+  } catch(e) {}
 }
 
-function removeRow(btn) {
-    btn.closest("tr").remove();
-    calculate();
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const gv = id => parseFloat(document.getElementById(id).value) || 0;
+const $ = id => document.getElementById(id);
+
+function setStepState(stepId, cls) {
+  const el = $(stepId);
+  el.classList.remove('active', 'done', 'collapsed');
+  el.classList.add(cls);
 }
 
-/* ===== STRICT PACKING LOGIC ===== */
+function markDone(stepId) {
+  const el = $(stepId);
+  el.classList.remove('active');
+  el.classList.add('done');
+  const numEl = el.querySelector('.step-num');
+  numEl.innerHTML = '✓';
+}
 
-function updateTable(effective, totalResources) {
-    const sums = Array(sprintCount).fill(0);
+function toggleStep(stepId) {
+  // All sections stay open — clicking the header does nothing
+}
 
-    document.querySelectorAll("#itemsTable tbody tr").forEach(r => {
-        const res = +r.cells[1].querySelector("input").value;
-		const spr = +r.cells[2].querySelector("input").value;
+function validateField(input, min, max) {
+  const val = parseFloat(input.value);
+  const isValid = !isNaN(val) && val >= min && (max === undefined || val <= max);
+  input.classList.toggle('error', !isValid && input.value !== '');
+  return isValid;
+}
 
-/* ✅ Correct FTE calculation */
-const ftePerResource = totalResources > 0 
-    ? (effective / totalResources) 
-    : 0;
+// ─── STEP 1 ───────────────────────────────────────────────────────────────────
+function updateQuarterDays() {
+  const q = $('quarter').value;
+  state.quarter = q;
+  if (QDDAYS[q]) {
+    state.workingDays = QDDAYS[q];
+    $('workingDays').value = QDDAYS[q];
+    autoCalc();
+  }
+  save();
+}
 
-const fte = res * ftePerResource;
+function autoCalc() {
+  const r  = gv('resources'),
+        d  = gv('workingDays'),
+        h  = gv('hoursPerDay'),
+        v  = gv('vacationDays'),
+        p  = gv('publicHolidays'),
+        o  = gv('otherAbsence'),
+        sp = gv('sprints');
 
-        /* ⛔ HARD STOP PER ITEM */
-        if (fte > effective) {
-            r.cells[1].querySelector("input").value = r.cells[1].querySelector("input").dataset.prev;
-            alert("This item exceeds the available FTE per sprint.");
-            return;
+  if (!r || !d || !h || !sp) return;
+
+  const gross   = r * d * h;
+  const absence = (v + o) * h + (p * r * h);
+  const net     = Math.max(0, gross - absence);
+  const fte     = net / (d * h);
+
+  state.resources     = r;
+  state.workingDays   = d;
+  state.hoursPerDay   = h;
+  state.vacationDays  = v;
+  state.publicHolidays= p;
+  state.otherAbsence  = o;
+  state.sprints       = sp;
+  state.netHours      = net;
+  state.totalFTE      = fte;
+
+  $('r-gross').textContent   = gross.toLocaleString();
+  $('r-absence').textContent = absence.toLocaleString();
+  $('r-net').textContent     = net.toLocaleString();
+  $('r-fte').textContent     = fte.toFixed(2);
+
+  $('formula1-text').innerHTML =
+    `Gross = ${r} × ${d} × ${h} = <strong>${gross.toLocaleString()} hrs</strong><br>
+     Absences = (${v}+${o})×${h} + ${p}×${r}×${h} = <strong>${absence.toLocaleString()} hrs</strong><br>
+     Net = <strong>${net.toLocaleString()} hrs</strong><br>
+     FTE = ${net.toLocaleString()} ÷ (${d}×${h}) = <strong>${fte.toFixed(2)} FTE</strong>`;
+
+  $('s1-results').style.display = 'flex';
+  $('formula1').style.display   = 'block';
+
+  // Keep alloc display in sync live
+  updateAllocDisplay();
+  save();
+}
+
+function calcStep1() {
+  const r  = gv('resources'),
+        d  = gv('workingDays'),
+        h  = gv('hoursPerDay'),
+        sp = gv('sprints');
+
+  if (!r || !d || !h || !sp) {
+    alert('Please fill in all required fields: Resources, Working Days, Hours/Day, and Sprints.');
+    return;
+  }
+
+  autoCalc();
+  markDone('step1');
+  updateAllocDisplay();
+  save();
+}
+
+// ─── STEP 2 ───────────────────────────────────────────────────────────────────
+function syncAlloc(type) {
+  if (type === 'rtb') {
+    state.rtbPct = gv('rtb-slider');
+    state.commitsPct = 100 - state.rtbPct;
+    $('commits-slider').value = state.commitsPct;
+    $('commits-num').value    = state.commitsPct;
+    $('rtb-num').value        = state.rtbPct;
+  } else if (type === 'rtb-num') {
+    state.rtbPct = Math.min(100, Math.max(0, gv('rtb-num')));
+    state.commitsPct = 100 - state.rtbPct;
+    $('rtb-slider').value     = state.rtbPct;
+    $('commits-slider').value = state.commitsPct;
+    $('commits-num').value    = state.commitsPct;
+  } else if (type === 'commits') {
+    state.commitsPct = gv('commits-slider');
+    state.rtbPct = 100 - state.commitsPct;
+    $('rtb-slider').value  = state.rtbPct;
+    $('rtb-num').value     = state.rtbPct;
+    $('commits-num').value = state.commitsPct;
+  } else if (type === 'commits-num') {
+    state.commitsPct = Math.min(100, Math.max(0, gv('commits-num')));
+    state.rtbPct = 100 - state.commitsPct;
+    $('commits-slider').value = state.commitsPct;
+    $('rtb-slider').value     = state.rtbPct;
+    $('rtb-num').value        = state.rtbPct;
+  } else if (type === 'buffer') {
+    state.bufferPct = gv('buffer-slider');
+    $('buffer-num').value = state.bufferPct;
+  } else if (type === 'buffer-num') {
+    state.bufferPct = Math.min(100, Math.max(0, gv('buffer-num')));
+    $('buffer-slider').value = state.bufferPct;
+  }
+
+  updateAllocDisplay();
+  renderWorkItems();
+  save();
+}
+
+function updateAllocDisplay() {
+  const fte = state.totalFTE;
+  const r   = state.rtbPct;
+  const c   = state.commitsPct;
+  const b   = state.bufferPct;
+
+  const rtbFTE     = fte * r / 100;
+  const commitsFTE = fte * c / 100;
+  const bufferFTE  = commitsFTE * b / 100;
+  const effectFTE  = commitsFTE - bufferFTE;
+
+  state.effectiveFTE = effectFTE;
+
+  // Labels in alloc cards
+  $('rtb-pct-lbl').textContent    = r + '%';
+  $('rtb-fte-lbl').textContent    = rtbFTE.toFixed(2) + ' FTE';
+  $('commits-pct-lbl').textContent = c + '%';
+  $('commits-fte-lbl').textContent = commitsFTE.toFixed(2) + ' FTE';
+  $('buffer-pct-lbl').textContent  = b + '%';
+  $('buffer-fte-lbl').textContent  = bufferFTE.toFixed(2) + ' FTE reserved';
+
+  // Sync slider/input values to state
+  $('rtb-slider').value     = r;
+  $('rtb-num').value        = r;
+  $('commits-slider').value = c;
+  $('commits-num').value    = c;
+  $('buffer-slider').value  = b;
+  $('buffer-num').value     = b;
+
+  // Progress bar
+  $('bar-rtb').style.width     = r + '%';
+  $('bar-commits').style.width = c + '%';
+  $('alloc-total-lbl').textContent = (r + c) + '%';
+  $('bar-rtb-label').textContent     = r >= 8 ? `${r}% · ${rtbFTE.toFixed(2)} FTE` : '';
+  $('bar-commits-label').textContent = c >= 8 ? `${c}% · ${commitsFTE.toFixed(2)} FTE` : '';
+
+  // Alloc must-equal-100 warning
+  const allocSum = r + c;
+  const allocWarn = $('alloc-warn');
+  if (allocSum !== 100) {
+    $('alloc-sum-val').textContent = allocSum;
+    allocWarn.style.display = 'flex';
+  } else {
+    allocWarn.style.display = 'none';
+  }
+
+  // Buffer 0% warning
+  $('buffer-warn').style.display = (b === 0) ? 'flex' : 'none';
+
+  // Result boxes
+  $('r-effectiveFTE').textContent = effectFTE.toFixed(2);
+  $('r-rtbFTE').textContent       = rtbFTE.toFixed(2);
+  $('r-commitsFTE').textContent   = commitsFTE.toFixed(2);
+  $('r-bufferFTE').textContent    = bufferFTE.toFixed(2);
+}
+
+function calcStep2() {
+  updateAllocDisplay();
+  markDone('step2');
+  renderWorkItems();
+  save();
+}
+
+// ─── STEP 3 ───────────────────────────────────────────────────────────────────
+function addWorkItem() {
+  state.workItems.push({ id: Date.now(), name: '', resources: 1, sprints: 1 });
+  renderWorkItems();
+  save();
+}
+
+function removeWI(id) {
+  state.workItems = state.workItems.filter(w => w.id !== id);
+  renderWorkItems();
+  save();
+}
+
+function updateWI(id, field, value) {
+  const w = state.workItems.find(x => x.id === id);
+  if (w) w[field] = field === 'name' ? value : (parseFloat(value) || 0);
+  renderWorkItems();
+  save();
+}
+
+function renderWorkItems() {
+  const emptyState  = $('empty-state');
+  const tableWrap   = $('wi-table-wrap');
+  const table       = $('itemsTable');
+  const sprintCount = state.sprints || 0;
+  const effFTE      = state.effectiveFTE || 0;
+  const resources   = state.resources || 1;
+
+  if (!state.workItems.length) {
+    emptyState.style.display = 'block';
+    tableWrap.style.display  = 'none';
+    updateCapacityBar(0, 0, sprintCount, effFTE);
+    hideChartWrap();
+    return;
+  }
+
+  emptyState.style.display = 'none';
+  tableWrap.style.display  = 'block';
+
+  // FTE per resource per sprint
+  const ftePerResource = resources > 0 ? effFTE / resources : 0;
+
+  // Calculate FTE for each item (based on resources, independent of sprints)
+  state.workItems.forEach(w => {
+    w.fte = (w.resources || 0) * ftePerResource;
+  });
+
+  // Sprint placement — greedy first-fit
+  const sprintLoads     = Array(sprintCount).fill(0);
+  // placement[itemIndex] = start sprint index (0-based), or -1 if unplaced
+  const placements = state.workItems.map(w => {
+    const spr = Math.min(w.sprints || 1, sprintCount);
+    for (let s = 0; s <= sprintCount - spr; s++) {
+      let fits = true;
+      for (let i = 0; i < spr; i++) {
+        if (sprintLoads[s + i] + w.fte > effFTE + 0.0001) { fits = false; break; }
+      }
+      if (fits) {
+        for (let i = 0; i < spr; i++) sprintLoads[s + i] += w.fte;
+        return s;
+      }
+    }
+    return -1; // unplaced
+  });
+
+  // Quarter capacity — use actual sprint loads sum (matches what table shows)
+  const usedQuarter  = sprintLoads.reduce((a, b) => a + b, 0);
+  const totalQuarter = effFTE * sprintCount;
+  updateCapacityBar(usedQuarter, totalQuarter, sprintCount, effFTE);
+
+  // Build table HTML
+  let sprintHeaders = '';
+  for (let i = 1; i <= sprintCount; i++) sprintHeaders += `<th>Sprint ${i}</th>`;
+
+  let rows = state.workItems.map((w, idx) => {
+    const start = placements[idx];
+    const spr   = Math.min(w.sprints || 1, sprintCount);
+    let sprintCells = '';
+    for (let i = 0; i < sprintCount; i++) {
+      const active = start >= 0 && i >= start && i < start + spr;
+      sprintCells += active
+        ? `<td class="wi-sprint-cell wi-sprint-filled">${w.fte.toFixed(2)}</td>`
+        : `<td class="wi-sprint-cell wi-sprint-empty">—</td>`;
+    }
+    const unplaced = start < 0 ? ' style="background:var(--danger-light)"' : '';
+    return `<tr${unplaced}>
+      <td><div class="wi-name-cell">
+        <button class="btn btn-danger-ghost" onclick="removeWI(${w.id})" style="padding:3px 7px;font-size:11px" title="Remove">✕</button>
+        <input type="text" placeholder="Work item name…" value="${escHtml(w.name)}" oninput="updateWI(${w.id},'name',this.value)">
+      </div></td>
+      <td><input type="number" min="1" max="${resources}" value="${w.resources}" oninput="updateWI(${w.id},'resources',this.value)"></td>
+      <td><input type="number" min="1" max="${sprintCount || 20}" value="${w.sprints}" oninput="updateWI(${w.id},'sprints',this.value)"></td>
+      <td class="wi-fte-cell">${w.fte.toFixed(2)}</td>
+      ${sprintCells}
+    </tr>`;
+  }).join('');
+
+  // Sum row
+  let sumCells = '';
+  for (let i = 0; i < sprintCount; i++) {
+    const over = sprintLoads[i] > effFTE + 0.0001;
+    sumCells += `<td class="${over ? 'sum-over' : 'sum-ok'}">${sprintLoads[i].toFixed(2)}</td>`;
+  }
+
+  table.innerHTML = `
+    <thead><tr>
+      <th>Work Item</th><th># Resources</th><th># Sprints</th><th>FTE</th>${sprintHeaders}
+    </tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr>
+      <td colspan="4">Sum per sprint</td>${sumCells}
+    </tr></tfoot>`;
+
+  if (sprintCount > 0) renderChart(sprintLoads, effFTE, sprintCount);
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateCapacityBar(used, total, sprintCount, effFTE) {
+  const pct = total > 0 ? Math.min((used / total) * 100, 100) : 0;
+  const over = total > 0 && used > total;
+  const fillEl = $('quarter-capacity-fill');
+
+  $('quarter-capacity-label').textContent = `${used.toFixed(2)} / ${total.toFixed(2)} FTE`;
+  fillEl.style.width = pct + '%';
+  fillEl.style.background = over ? 'var(--danger)' : 'var(--accent)';
+  const barLabel = $('quarter-capacity-bar-label');
+  if (barLabel) barLabel.textContent = pct >= 10 ? `${used.toFixed(2)} / ${total.toFixed(2)} FTE · ${Math.round(pct)}%` : '';
+
+  $('over-alert').style.display = (over && state.workItems.length > 0) ? 'flex' : 'none';
+  $('ok-alert').style.display   = (!over && state.workItems.length > 0 && total > 0) ? 'flex' : 'none';
+
+  // Update badge
+  $('s3-badge').textContent = state.workItems.length > 0
+    ? `${state.workItems.length} item${state.workItems.length !== 1 ? 's' : ''}`
+    : '';
+}
+
+function hideChartWrap() {
+  $('chartWrap').style.display = 'none';
+  if (chart) { chart.destroy(); chart = null; }
+}
+
+function renderChart(sprintLoads, effFTE, sprintCount) {
+  $('chartWrap').style.display = 'block';
+
+  // Replace canvas entirely to avoid Chart.js stale instance issues
+  const wrap = $('chartWrap');
+  const oldCanvas = $('burnupChart');
+  const newCanvas = document.createElement('canvas');
+  newCanvas.id = 'burnupChart';
+  newCanvas.height = 140;
+  oldCanvas.replaceWith(newCanvas);
+  if (chart) { try { chart.destroy(); } catch(e) {} chart = null; }
+
+  const cap    = parseFloat(effFTE.toFixed(3));
+  const labels = sprintLoads.map((_, i) => `Sprint ${i + 1}`);
+  const loads  = sprintLoads.map(v => parseFloat(v.toFixed(3)));
+
+  chart = new Chart(newCanvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'FTE Load per Sprint',
+          data: loads,
+          fill: true,
+          tension: 0.3,
+          borderColor: '#0052cc',
+          backgroundColor: 'rgba(0,82,204,0.08)',
+          pointBackgroundColor: '#0052cc',
+          pointRadius: 4
+        },
+        {
+          label: 'Sprint Capacity (' + cap.toFixed(2) + ' FTE)',
+          data: Array(labels.length).fill(cap),
+          borderDash: [6, 4],
+          borderColor: '#00875a',
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: false
         }
-
-        r.cells[3].textContent = fte.toFixed(2);
-        for (let i=0;i<sprintCount;i++) r.cells[4+i].textContent = "";
-
-        /* Smart placement */
-        for (let s=0; s<sprintCount; s++) {
-            if (sums[s] + fte <= effective) {
-                for (let i=0;i<spr && s+i<sprintCount;i++) {
-                    sums[s+i] += fte;
-                    r.cells[4+s+i].textContent = fte.toFixed(2);
-                }
-                break;
-            }
+      ]
+    },
+    options: {
+      responsive: true,
+      animation: false,
+      plugins: { legend: { labels: { font: { size: 12 } } } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'FTE', font: { size: 11 } }
         }
-    });
-    
-    /* ===== Quarter Capacity Bar Update ===== */
-
-// Capacidade total do quarter
-const quarterCapacity = effective * sprintCount;
-
-// Capacidade usada (acumulado)
-let usedCapacity = 0;
-
-document.querySelectorAll("#itemsTable tbody tr").forEach(r => {
-    const res = +r.cells[1].querySelector("input").value;
-    const spr = +r.cells[2].querySelector("input").value;
-
-    const ftePerResource =
-        totalResources > 0 ? (effective / totalResources) : 0;
-
-    const itemFte = res * ftePerResource;
-    usedCapacity += itemFte * spr;
-});
-
-// Percentagem usada
-const usagePct = quarterCapacity > 0
-    ? Math.min((usedCapacity / quarterCapacity) * 100, 100)
-    : 0;
-
-// Atualizar texto
-document.getElementById("quarterCapacityLabel").textContent =
-    `${usedCapacity.toFixed(2)} / ${quarterCapacity.toFixed(2)} FTE`;
-
-// Atualizar barra
-const bar = document.getElementById("quarterCapacityFill");
-bar.style.width = usagePct + "%";
-
-// Estados visuais
-bar.classList.remove("capacity-warning", "capacity-danger");
-
-if (usagePct >= 100) {
-    bar.classList.add("capacity-danger");
-} else if (usagePct >= 80) {
-    bar.classList.add("capacity-warning");
-}
-
-    
-    
-    
-    
-    
-
-    for (let i=0;i<sprintCount;i++) {
-        sumRow.cells[i+1].textContent = sums[i].toFixed(2);
-        sumRow.cells[i+1].className = sums[i] >= effective ? "value-green" : "value-green";
+      }
     }
+  });
 }
 
+// ─── EXPORT / COPY ────────────────────────────────────────────────────────────
+function buildSummary() {
+  const lines = [
+    `===== FTE CAPACITY SUMMARY =====`,
+    `Quarter:          ${state.quarter || 'N/A'}`,
+    `Resources:        ${state.resources}`,
+    `Working Days:     ${state.workingDays}`,
+    `Hours/Day:        ${state.hoursPerDay}`,
+    `Absences (hrs):   ${((state.vacationDays + state.otherAbsence) * state.hoursPerDay + state.publicHolidays * state.resources * state.hoursPerDay).toLocaleString()}`,
+    `Net Hours:        ${state.netHours.toLocaleString()}`,
+    `Total FTE:        ${state.totalFTE.toFixed(2)}`,
+    ``,
+    `--- Allocation ---`,
+    `RTB:              ${state.rtbPct}%  →  ${(state.totalFTE * state.rtbPct / 100).toFixed(2)} FTE`,
+    `New Development:  ${state.commitsPct}%  →  ${(state.totalFTE * state.commitsPct / 100).toFixed(2)} FTE`,
+    `Buffer:           ${state.bufferPct}%  →  ${(state.totalFTE * state.commitsPct / 100 * state.bufferPct / 100).toFixed(2)} FTE`,
+    `Effective FTE:    ${state.effectiveFTE.toFixed(2)} FTE`,
+    ``
+  ];
 
-
-
-
-
-
-/* Burn‑up chart unchanged */
-function drawFteBurnupChartFromTable() {
-    const svg = fteBurnupChart;
-    const usage = Array.from(sumRow.cells).slice(1).map(c => +c.textContent || 0);
-    const capacity = +effectiveSprintFte.textContent;
-
-    const w=700,h=260,p=40;
-    svg.innerHTML="";
-    const maxY=Math.max(1,capacity,...usage)*1.1;
-    const stepX=(w-p*2)/(usage.length-1||1);
-    const scaleY=y=>h-p-(y/maxY)*(h-p*2);
-
-    svg.innerHTML+=`<line x1="${p}" y1="${p}" x2="${p}" y2="${h-p}" stroke="#888"/>
-                    <line x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}" stroke="#888"/>`;
-
-    const yCap=scaleY(capacity);
-    svg.innerHTML+=`<line x1="${p}" y1="${yCap}" x2="${w-p}" y2="${yCap}"
-        stroke="#2e8b57" stroke-width="2" stroke-dasharray="4 4"/>`;
-
-    let path="";
-    usage.forEach((v,i)=>{
-        const x=p+stepX*i,y=scaleY(v);
-        path+=i?` L ${x} ${y}`:`M ${x} ${y}`;
-        svg.innerHTML+=`<circle cx="${x}" cy="${y}" r="3"
-            fill="${v>capacity?"#d13438":"#0078d4"}"/>`;
+  if (state.workItems.length) {
+    lines.push(`--- Work Items (${state.workItems.length}) ---`);
+    state.workItems.forEach((w, i) => {
+      lines.push(`${i+1}. ${w.name || '(unnamed)'}  |  ${w.resources} res  |  ${w.sprints} sprints  |  ${w.fte.toFixed(2)} FTE`);
     });
-    svg.innerHTML+=`<path d="${path}" fill="none" stroke="#0078d4" stroke-width="2"/>`;
+    const totalUsed  = state.workItems.reduce((s, w) => s + w.fte, 0);
+    const totalAvail = state.effectiveFTE * state.sprints;
+    lines.push('');
+    lines.push(`Total Committed: ${totalUsed.toFixed(2)} / ${totalAvail.toFixed(2)} FTE`);
+  }
+
+  lines.push(``, `Generated: ${new Date().toLocaleString()}`);
+  return lines.join('\n');
 }
 
-calculate();
+function openExport() {
+  $('export-text').textContent = buildSummary();
+  $('modal').classList.add('open');
+}
+
+function copySummary() {
+  navigator.clipboard.writeText(buildSummary())
+    .then(() => alert('Summary copied to clipboard!'))
+    .catch(() => alert('Copy failed — please use the Export modal.'));
+}
+
+function copyFromModal() {
+  navigator.clipboard.writeText($('export-text').textContent)
+    .then(() => alert('Copied to clipboard!'))
+    .catch(() => alert('Copy failed.'));
+}
+
+function closeModal() {
+  $('modal').classList.remove('open');
+}
+
+function handleModalOverlayClick(e) {
+  if (e.target === $('modal')) closeModal();
+}
+
+function resetAll() {
+  if (!confirm('Reset all data? This cannot be undone.')) return;
+  localStorage.removeItem('fte_v42');
+  location.reload();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', load);
 </script>
 </body>
 </html>
-
-
-
-
