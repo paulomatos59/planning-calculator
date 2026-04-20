@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quarterly FTE Capacity Calculator</title>
+<title>Quarterly FTE Capacity Calculator v4.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
@@ -196,18 +196,7 @@ input[type="range"] { -webkit-appearance: none; width: 100%; height: 5px; border
 .chart-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 12px; }
 
 /* ACTIONS BAR */
-.actions-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center; /* ✅ centra os botões */
-  gap: 8px;
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-
-
+.actions-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
 .spacer { flex: 1; }
 
 /* MODAL */
@@ -224,15 +213,15 @@ footer strong { color: var(--muted); }
 <body>
 
 <div class="top-bar">
-  <span class="top-bar-logo">Powered by Five9 | TPM</span>
+  <span class="top-bar-logo">Five9 TPM</span>
   <span class="top-bar-sep">›</span>
   <span class="top-bar-title">Quarterly FTE Capacity Calculator</span>
-  <span class="top-bar-version">v5.01</span>
+  <span class="top-bar-version">v5.0.2</span>
 </div>
 
 <div class="container">
   <div class="page-title">Quarterly FTE Capacity Calculator</div>
-  <div class="page-sub">Understand how much your team can deliver this quarter.</div>
+  <div class="page-sub">Plan your team's quarterly capacity with precision. Data is auto-saved in your browser.</div>
 
   <!-- STEP 1 -->
   <div class="step active" id="step1">
@@ -248,13 +237,13 @@ footer strong { color: var(--muted); }
     <div class="step-body">
       <div class="form-grid">
         <div class="field">
-          <label>Total Team Resources(*)</label>
+          <label>Total Team Resources</label>
           <input type="number" id="resources" min="1" placeholder="e.g. 10" oninput="validateField(this,1,500);autoCalc()">
           <span class="field-hint">Number of people</span>
           <span class="field-error">Must be ≥ 1</span>
         </div>
         <div class="field">
-          <label>Quarter(*)</label>
+          <label>Quarter</label>
           <select id="quarter" onchange="updateQuarterDays()">
             <option value="">— Select —</option>
             <option value="Q2-2026">Q2 2026 (Apr–Jun)</option>
@@ -268,13 +257,13 @@ footer strong { color: var(--muted); }
           <span class="field-hint">Auto-fills working days</span>
         </div>
         <div class="field">
-          <label>Working Days (Quarter)(*)</label>
+          <label>Working Days (Quarter)</label>
           <input type="number" id="workingDays" min="1" placeholder="e.g. 65" oninput="validateField(this,1,999);autoCalc()">
           <span class="field-hint">Auto-filled from quarter</span>
           <span class="field-error">Must be ≥ 1</span>
         </div>
         <div class="field">
-          <label>Hours per Day(*)</label>
+          <label>Hours per Day</label>
           <input type="number" id="hoursPerDay" min="1" max="24" value="8" oninput="validateField(this,1,24);autoCalc()">
           <span class="field-hint">Standard working hours</span>
           <span class="field-error">Must be 1–24</span>
@@ -298,7 +287,7 @@ footer strong { color: var(--muted); }
           <span class="field-error">Must be ≥ 0</span>
         </div>
         <div class="field">
-          <label># Sprints in Quarter(*)</label>
+          <label># Sprints in Quarter</label>
           <input type="number" id="sprints" min="1" max="20" value="6" oninput="validateField(this,1,20);autoCalc()">
           <span class="field-hint">Typically 6 × 2-week sprints</span>
           <span class="field-error">Must be 1–20</span>
@@ -334,7 +323,7 @@ footer strong { color: var(--muted); }
       </div>
 
       <div class="actions-bar">
-        <button class="btn btn-primary" onclick="calcStep1()">Calculate Team Capacity</button>
+        <button class="btn btn-primary" onclick="calcStep1()">Calculate Capacity →</button>
       </div>
     </div>
   </div>
@@ -389,7 +378,7 @@ footer strong { color: var(--muted); }
 
       <div style="margin-top:20px; padding:16px; background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--radius-sm)">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);margin-bottom:12px">Buffer — applied on New Development FTE only</div>
-        <div class="alloc-card alloc-buffer" style="max-width:100%">
+        <div class="alloc-card alloc-buffer" style="max-width:320px">
           <div class="alloc-card-label">Buffer %</div>
           <div class="alloc-val" id="buffer-pct-lbl">20%</div>
           <div class="alloc-fte-sub" id="buffer-fte-lbl">0.00 FTE reserved</div>
@@ -425,7 +414,7 @@ footer strong { color: var(--muted); }
       </div>
 
       <div class="actions-bar">
-        <button class="btn btn-primary" onclick="calcStep2()">Apply Allocation</button>
+        <button class="btn btn-primary" onclick="calcStep2()">Apply Allocation →</button>
       </div>
     </div>
   </div>
@@ -488,7 +477,7 @@ footer strong { color: var(--muted); }
   </div>
 
   <footer>
-    <strong>Quarterly FTE Capacity Calculator | Powered by <strong>Five9 TPM</strong>
+    Quarterly FTE Capacity Calculator <strong>v4.2</strong> · April 2026 · Powered by <strong>Five9 TPM</strong>
   </footer>
 </div>
 
@@ -793,9 +782,16 @@ function removeWI(id) {
 
 function updateWI(id, field, value) {
   const w = state.workItems.find(x => x.id === id);
-  if (w) w[field] = field === 'name' ? value : (parseFloat(value) || 0);
-  renderWorkItems();
-  save();
+  if (!w) return;
+  if (field === 'name') {
+    // Just update state — don't re-render, keeps focus and cursor intact
+    w.name = value;
+    save();
+  } else {
+    w[field] = parseFloat(value) || 0;
+    renderWorkItems();
+    save();
+  }
 }
 
 function renderWorkItems() {
